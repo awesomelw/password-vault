@@ -37,6 +37,40 @@ DELETE: /api/vault/[id]
 remove one vault record for the verified user
 ```
 
+## Folder Boundaries
+
+```text
+src/app
+Next.js route space. Pages live here, and `src/app/api` contains real backend HTTP endpoints.
+
+src/app/api
+Server route handlers. These files respond to fetch requests like `/api/vault`, verify Firebase ID tokens, and use Firebase Admin.
+
+src/components
+React UI pieces. Components render forms, cards, private page guards, and the landing-page AdSense slot.
+
+src/hooks
+Reusable React/browser behavior. `useInactivityLogout` lives here because it uses React hooks, browser events, timers, and redirects.
+
+src/lib
+Shared helper code that is not directly a UI component or a Next route.
+
+src/lib/api
+Frontend request helpers. These functions call `src/app/api` routes, attach Firebase ID tokens, and handle failed responses.
+
+src/lib/auth
+Auth helpers split by environment: browser Firebase Auth helpers in `clientAuth.ts`, backend token verification in `serverAuth.ts`.
+
+src/lib/firebase
+Firebase setup split by environment: browser SDK setup in `client.ts`, Firebase Admin setup in `admin.ts`.
+
+src/lib/crypto
+Browser encryption helpers for turning plaintext passwords into encrypted Firestore-safe fields.
+
+src/lib/settings
+Plain local storage helpers for settings values such as the inactivity timeout.
+```
+
 ## Main File Responsibilities
 
 ```text
