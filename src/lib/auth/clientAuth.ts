@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 
@@ -12,4 +13,9 @@ export function signUpWithEmail(email: string, password: string) {
 // Signs in an existing Firebase account with email and password.
 export function logInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
+}
+
+// Signs out the current Firebase user from the browser.
+export function logOut() {
+  return signOut(auth);
 }
