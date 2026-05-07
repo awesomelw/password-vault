@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Password Vault",
   description:
     "A fullstack encrypted password vault with secure authentication and public-page monetization.",
+  icons: {
+    icon: [{ url: "/password-vault-icon.webp", type: "image/webp" }],
+  },
 };
 
 export default function RootLayout({
