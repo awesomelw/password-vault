@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProtectedPage from "@/components/ProtectedPage";
 import { checkBackendAuth } from "@/lib/api/authCheck";
+import {
+  createVaultItem,
+  getVaultItems,
+  type VaultItem,
+} from "@/lib/api/vaultApi";
 import { logOut } from "@/lib/auth/clientAuth";
 
 const accessControls = ["Reveal", "Copy username", "Copy password"];
@@ -13,22 +18,56 @@ const managementControls = ["Add", "Edit", "Delete"];
 export default function VaultPage() {
   const router = useRouter();
   const [backendAuthStatus, setBackendAuthStatus] = useState("Checking backend...");
+  const [testRecordStatus, setTestRecordStatus] = useState("");
+  const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(true);
+  const [itemsError, setItemsError] = useState("");
 
   useEffect(() => {
-    // Confirms the backend can verify the logged-in Firebase user.
-    checkBackendAuth()
-      .then((user) => {
+    async function loadVault() {
+      try {
+        // Confirms the backend can verify the logged-in Firebase user.
+        const user = await checkBackendAuth();
         setBackendAuthStatus(`Backend verified ${user.email ?? user.uid}`);
-      })
-      .catch(() => {
+
+        // Loads encrypted vault records owned by the verified user.
+        const data = await getVaultItems();
+        setVaultItems(data.items);
+      } catch {
         setBackendAuthStatus("Backend verification failed.");
-      });
+        setItemsError("Unable to load vault records.");
+      } finally {
+        setIsLoadingItems(false);
+      }
+    }
+
+    loadVault();
   }, []);
 
   async function handleLogout() {
     // Signs out through Firebase before leaving the vault page.
     await logOut();
     router.push("/login");
+  }
+
+  async function handleCreateTestRecord() {
+    setTestRecordStatus("Creating test record...");
+
+    try {
+      // Creates a fake encrypted record to test the Firestore API path.
+      await createVaultItem({
+        service: "GitHub",
+        username: "test@example.com",
+        encryptedPassword: "test-ciphertext",
+        passwordIv: "test-iv",
+      });
+
+      const data = await getVaultItems();
+      setVaultItems(data.items);
+      setTestRecordStatus("Test record created in Firestore.");
+    } catch {
+      setTestRecordStatus("Unable to create test record.");
+    }
   }
 
   return (
@@ -81,22 +120,57 @@ export default function VaultPage() {
 
                 <button
                   type="button"
+                  onClick={handleCreateTestRecord}
                   className="rounded-md bg-emerald-500 px-4 py-3 font-semibold text-zinc-950 transition hover:bg-emerald-400"
                 >
-                  Add password
+                  Add test record
                 </button>
               </div>
 
-              {/* Empty state until real vault records are loaded. */}
-              <div className="mt-8 rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center shadow-sm">
-                <h2 className="text-xl font-semibold">
-                  No passwords saved yet
-                </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-zinc-600">
-                  Once Firestore is connected, saved logins will appear here
-                  with controls to reveal, copy, edit, or delete each record.
+              {testRecordStatus ? (
+                <p className="mt-4 text-sm font-medium text-emerald-700">
+                  {testRecordStatus}
                 </p>
-              </div>
+              ) : null}
+
+              {isLoadingItems ? (
+                <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-6 text-sm font-medium text-zinc-600 shadow-sm">
+                  Loading vault records...
+                </div>
+              ) : itemsError ? (
+                <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-700 shadow-sm">
+                  {itemsError}
+                </div>
+              ) : vaultItems.length ? (
+                // Shows safe record fields while encrypted password display is still pending.
+                <div className="mt-8 grid gap-3">
+                  {vaultItems.map((item) => (
+                    <article
+                      key={item.id}
+                      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+                    >
+                      <h2 className="text-lg font-semibold">
+                        {item.service}
+                      </h2>
+                      <p className="mt-2 text-sm text-zinc-600">
+                        {item.username}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                // Empty state shown when the user has no saved vault records.
+                <div className="mt-8 rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center shadow-sm">
+                  <h2 className="text-xl font-semibold">
+                    No passwords saved yet
+                  </h2>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-zinc-600">
+                    Once encrypted records are added, saved logins will appear
+                    here with controls to reveal, copy, edit, or delete each
+                    record.
+                  </p>
+                </div>
+              )}
             </section>
 
             {/* Summary panel for the dashboard controls we will wire later. */}
