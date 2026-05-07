@@ -57,3 +57,16 @@ export async function createVaultItem(
 
   return response.json();
 }
+
+export async function deleteVaultItem(id: string) {
+  const response = await fetch(`/api/vault/${id}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to delete vault item.");
+  }
+
+  return response.json();
+}

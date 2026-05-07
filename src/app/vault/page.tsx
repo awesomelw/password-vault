@@ -2,33 +2,30 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type SubmitEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ProtectedPage from "@/components/ProtectedPage";
+import AddPasswordForm from "@/components/vault/AddPasswordForm";
+import VaultItemCard from "@/components/vault/VaultItemCard";
 import { checkBackendAuth } from "@/lib/api/authCheck";
-import {
-  createVaultItem,
-  getVaultItems,
-  type VaultItem,
-} from "@/lib/api/vaultApi";
+import { getVaultItems, type VaultItem } from "@/lib/api/vaultApi";
 import { logOut } from "@/lib/auth/clientAuth";
-import { encryptPassword } from "@/lib/crypto/vaultCrypto";
 
 const accessControls = ["Reveal", "Copy username", "Copy password"];
 const managementControls = ["Add", "Edit", "Delete"];
 
 export default function VaultPage() {
   const router = useRouter();
-  const [backendAuthStatus, setBackendAuthStatus] = useState("Checking backend...");
+  const [backendAuthStatus, setBackendAuthStatus] =
+    useState("Checking backend...");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
   const [itemsError, setItemsError] = useState("");
-  const [service, setService] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [notes, setNotes] = useState("");
-  const [addFormStatus, setAddFormStatus] = useState("");
-  const [addFormError, setAddFormError] = useState("");
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  async function refreshVaultItems() {
+    // Reloads the vault list after a child component changes saved records.
+    const data = await getVaultItems();
+    setVaultItems(data.items);
+  }
 
   useEffect(() => {
     async function loadVault() {
@@ -38,8 +35,7 @@ export default function VaultPage() {
         setBackendAuthStatus(`Backend verified ${user.email ?? user.uid}`);
 
         // Loads encrypted vault records owned by the verified user.
-        const data = await getVaultItems();
-        setVaultItems(data.items);
+        await refreshVaultItems();
       } catch {
         setBackendAuthStatus("Backend verification failed.");
         setItemsError("Unable to load vault records.");
@@ -57,49 +53,9 @@ export default function VaultPage() {
     router.push("/login");
   }
 
-  async function handleAddPassword(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAddFormStatus("");
-    setAddFormError("");
-
-    // Validates the required vault fields before encrypting anything.
-    if (!service.trim() || !username.trim() || !password) {
-      setAddFormError("Service, username, and password are required.");
-      return;
-    }
-
-    setIsSavingPassword(true);
-
-    try {
-      // Encrypts the password in the browser before sending it to the backend.
-      const encryptedValue = await encryptPassword(password);
-
-      // Sends only encrypted password data to the Firestore-backed API route.
-      await createVaultItem({
-        service,
-        username,
-        notes,
-        encryptedPassword: encryptedValue.encryptedPassword,
-        passwordIv: encryptedValue.passwordIv,
-      });
-
-      const data = await getVaultItems();
-      setVaultItems(data.items);
-      setService("");
-      setUsername("");
-      setPassword("");
-      setNotes("");
-      setAddFormStatus("Password saved.");
-    } catch {
-      setAddFormError("Unable to save password.");
-    } finally {
-      setIsSavingPassword(false);
-    }
-  }
-
   return (
     <ProtectedPage>
-      {/* Vault dashboard shell before Firestore data is connected. */}
+      {/* Vault dashboard for saved encrypted records. */}
       <main className="min-h-screen bg-zinc-100 text-zinc-950">
         <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-6 sm:px-8 lg:px-10">
           {/* Private app navigation for logged-in users. */}
@@ -136,98 +92,15 @@ export default function VaultPage() {
           <div className="grid flex-1 gap-6 py-8 lg:grid-cols-[1fr_18rem]">
             <section>
               <div>
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700">
-                    Vault
-                  </p>
-                  <h1 className="mt-2 text-3xl font-semibold">
-                    Saved passwords
-                  </h1>
-                </div>
+                <p className="text-sm font-medium uppercase tracking-[0.16em] text-emerald-700">
+                  Vault
+                </p>
+                <h1 className="mt-2 text-3xl font-semibold">
+                  Saved passwords
+                </h1>
               </div>
 
-              {/* Add-password form that encrypts before saving. */}
-              <form
-                className="mt-6 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
-                onSubmit={handleAddPassword}
-              >
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="text-sm font-medium text-zinc-700">
-                      Service
-                    </span>
-                    <input
-                      type="text"
-                      value={service}
-                      onChange={(event) => setService(event.target.value)}
-                      placeholder="GitHub"
-                      className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none transition focus:border-emerald-500"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-medium text-zinc-700">
-                      Username
-                    </span>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(event) => setUsername(event.target.value)}
-                      placeholder="you@example.com"
-                      className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none transition focus:border-emerald-500"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-medium text-zinc-700">
-                      Password
-                    </span>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Password to encrypt"
-                      className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none transition focus:border-emerald-500"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-medium text-zinc-700">
-                      Notes
-                    </span>
-                    <input
-                      type="text"
-                      value={notes}
-                      onChange={(event) => setNotes(event.target.value)}
-                      placeholder="Optional note"
-                      className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-3 text-sm outline-none transition focus:border-emerald-500"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-5">
-                  <button
-                    type="submit"
-                    disabled={isSavingPassword}
-                    className="rounded-md bg-emerald-500 px-4 py-3 font-semibold text-zinc-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:text-zinc-100"
-                  >
-                    {isSavingPassword ? "Saving..." : "Save password"}
-                  </button>
-                </div>
-
-                {addFormError ? (
-                  <p className="mt-4 text-sm font-medium text-red-600">
-                    {addFormError}
-                  </p>
-                ) : null}
-
-                {addFormStatus ? (
-                  <p className="mt-4 text-sm font-medium text-zinc-600">
-                    {addFormStatus}
-                  </p>
-                ) : null}
-
-              </form>
+              <AddPasswordForm onPasswordCreated={refreshVaultItems} />
 
               {isLoadingItems ? (
                 <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-6 text-sm font-medium text-zinc-600 shadow-sm">
@@ -238,25 +111,13 @@ export default function VaultPage() {
                   {itemsError}
                 </div>
               ) : vaultItems.length ? (
-                // Shows safe record fields while encrypted password display is still pending.
                 <div className="mt-8 grid gap-3">
                   {vaultItems.map((item) => (
-                    <article
+                    <VaultItemCard
                       key={item.id}
-                      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
-                    >
-                      <h2 className="text-lg font-semibold">
-                        {item.service}
-                      </h2>
-                      <p className="mt-2 text-sm text-zinc-600">
-                        {item.username}
-                      </p>
-                      {item.notes ? (
-                        <p className="mt-3 text-sm text-zinc-500">
-                          {item.notes}
-                        </p>
-                      ) : null}
-                    </article>
+                      item={item}
+                      onVaultItemDeleted={refreshVaultItems}
+                    />
                   ))}
                 </div>
               ) : (
