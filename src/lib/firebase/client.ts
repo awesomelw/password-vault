@@ -1,5 +1,17 @@
 import { getApps, initializeApp } from "firebase/app";
+import {
+  getToken,
+  initializeAppCheck,
+  ReCaptchaV3Provider,
+} from "firebase/app-check";
 import { getAuth } from "firebase/auth";
+
+declare global {
+  var firebaseAppCheckInitialized: boolean | undefined;
+  interface Window {
+    FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string;
+  }
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,8 +22,35 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Reuses an existing Firebase app during local hot reloads.
+// Reuses an existing Firebase app
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
+if (typeof window !== "undefined" && recaptchaSiteKey) {
+  const isAppCheckDebugMode =
+    process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN === "true";
+
+  if (isAppCheckDebugMode) {
+    // Allows Firebase App Check to run locally while we test the setup.
+    window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+
+  if (!globalThis.firebaseAppCheckInitialized) {
+    // Invisible reCAPTCHA check used by Firebase App Check for browser requests.
+    const appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+
+    globalThis.firebaseAppCheckInitialized = true;
+
+    if (isAppCheckDebugMode) {
+      // Forces a local debug token request so Firebase prints it in DevTools.
+      getToken(appCheck).catch(() => {});
+    }
+  }
+}
 
 // Browser Firebase Auth instance used by login and signup pages.
 export const auth = getAuth(app);

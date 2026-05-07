@@ -18,6 +18,7 @@ export default function VaultPage() {
   );
 }
 
+// Separate out vault workspace to avoid loading issues.
 function VaultWorkspace() {
   const router = useRouter();
   const [backendAuthStatus, setBackendAuthStatus] =
