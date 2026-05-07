@@ -42,7 +42,7 @@ export default function VaultItemCard({
     const timeoutId = window.setTimeout(() => {
       setCopyStatus("");
       setEditStatus("");
-    }, 3000);
+    }, 2000);
 
     return () => window.clearTimeout(timeoutId);
   }, [copyStatus, editStatus]);
@@ -102,7 +102,14 @@ export default function VaultItemCard({
     try {
       // Delete: remove this record from the user's Firestore vault collection.
       await deleteVaultItem(item.id);
-      await onVaultItemDeleted();
+
+      try {
+        // Refreshes the list after the delete succeeds.
+        await onVaultItemDeleted();
+      } catch {
+        setDeleteStatus("Password deleted, but the list did not refresh.");
+        setIsDeleting(false);
+      }
     } catch {
       setDeleteStatus("Unable to delete password.");
       setIsDeleting(false);
@@ -143,9 +150,17 @@ export default function VaultItemCard({
 
       // PATCH updates this existing vault item instead of creating a new one.
       await updateVaultItem(item.id, updates);
-      await onVaultItemUpdated();
       setEditPassword("");
       setRevealedPassword("");
+
+      try {
+        // Refreshes the list after the update succeeds.
+        await onVaultItemUpdated();
+      } catch {
+        setEditStatus("Password updated, but the list did not refresh.");
+        return;
+      }
+
       setIsEditing(false);
       setEditStatus("Password updated.");
     } catch {
@@ -255,11 +270,11 @@ export default function VaultItemCard({
 
       {!isEditing ? (
         <div className="mt-4 rounded-md bg-zinc-50 p-3">
-        <p className="text-sm font-medium text-zinc-700">Password</p>
-        <p className="mt-1 text-sm text-zinc-600">
-          {revealedPassword || "********"}
-        </p>
-      </div>
+          <p className="text-sm font-medium text-zinc-700">Password</p>
+          <p className="mt-1 text-sm text-zinc-600">
+            {revealedPassword || "********"}
+          </p>
+        </div>
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">

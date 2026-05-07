@@ -27,7 +27,7 @@ export default function AddPasswordForm({
     // Clears the saved message after the user sees it.
     const timeoutId = window.setTimeout(() => {
       setAddFormStatus("");
-    }, 3000);
+    }, 2000);
 
     return () => window.clearTimeout(timeoutId);
   }, [addFormStatus]);
@@ -58,12 +58,18 @@ export default function AddPasswordForm({
         passwordIv: encryptedValue.passwordIv,
       });
 
-      await onPasswordCreated();
       setService("");
       setUsername("");
       setPassword("");
       setNotes("");
       setAddFormStatus("Password saved.");
+
+      try {
+        // Refreshes the list after the save succeeds.
+        await onPasswordCreated();
+      } catch {
+        setAddFormError("Password saved, but the list did not refresh.");
+      }
     } catch {
       setAddFormError("Unable to save password.");
     } finally {

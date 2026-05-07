@@ -4,6 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase/client";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
 type ProtectedPageProps = {
   children: ReactNode;
@@ -12,6 +13,7 @@ type ProtectedPageProps = {
 export default function ProtectedPage({ children }: ProtectedPageProps) {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Watches Firebase auth state before showing private pages.
@@ -21,12 +23,17 @@ export default function ProtectedPage({ children }: ProtectedPageProps) {
         return;
       }
 
+      // Once authenticated, private pages can render and start idle tracking.
+      setIsAuthenticated(true);
       setIsCheckingAuth(false);
     });
 
     // Removes the Firebase listener when the page unloads.
     return unsubscribe;
   }, [router]);
+
+  // Applies inactivity logout only after Firebase confirms a session.
+  useInactivityLogout(isAuthenticated);
 
   if (isCheckingAuth) {
     return (
