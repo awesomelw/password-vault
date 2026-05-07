@@ -19,7 +19,7 @@ export function useInactivityLogout(enabled: boolean) {
     let timeoutId: number;
 
     async function handleTimeout() {
-      // Logs out when the protected page has been idle too long.
+      // log out when the protected page has been idle too long
       try {
         await logOut();
       } finally {
@@ -28,7 +28,7 @@ export function useInactivityLogout(enabled: boolean) {
     }
 
     function resetTimer() {
-      // Starts a fresh countdown using the latest saved timeout setting.
+      // start a fresh countdown using the latest saved timeout setting
       window.clearTimeout(timeoutId);
       const timeoutMinutes = getStoredInactivityTimeout();
       timeoutId = window.setTimeout(
@@ -37,7 +37,7 @@ export function useInactivityLogout(enabled: boolean) {
       );
     }
 
-    // Resets the inactivity timer whenever the user interacts with the page.
+    // reset the inactivity timer whenever the user interacts with the page
     ACTIVITY_EVENTS.forEach((eventName) => {
       window.addEventListener(eventName, resetTimer);
     });

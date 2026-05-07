@@ -18,7 +18,7 @@ export default function VaultPage() {
   );
 }
 
-// Separate out vault workspace to avoid loading issues.
+// run vault data loading only after protectedpage confirms the session
 function VaultWorkspace() {
   const router = useRouter();
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
@@ -26,7 +26,7 @@ function VaultWorkspace() {
   const [itemsError, setItemsError] = useState("");
 
   async function refreshVaultItems() {
-    // Reloads the vault list after a child component changes saved records.
+    // refresh the visible list after a vault record changes
     const data = await getVaultItems();
     setVaultItems(data.items);
     setItemsError("");
@@ -35,10 +35,10 @@ function VaultWorkspace() {
   useEffect(() => {
     async function loadVault() {
       try {
-        // Confirms the backend accepts this signed-in Firebase session.
+        // confirm the backend accepts this signed-in firebase session
         await checkBackendAuth();
 
-        // Loads encrypted vault records owned by the verified user.
+        // load encrypted records owned by the verified user
         await refreshVaultItems();
       } catch {
         setItemsError("We could not load your vault. Try refreshing the page.");
@@ -51,16 +51,16 @@ function VaultWorkspace() {
   }, []);
 
   async function handleLogout() {
-    // Signs out through Firebase before leaving the vault page.
+    // end the firebase session before returning to login
     await logOut();
     router.push("/login");
   }
 
   return (
-    // Vault dashboard for saved encrypted records.
+    // private dashboard for encrypted vault records
     <main className="min-h-screen bg-zinc-100 text-zinc-950">
       <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-6 sm:px-8 lg:px-10">
-        {/* Private app navigation for logged-in users. */}
+        {/* private app navigation for logged-in users */}
         <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Link href="/" className="text-lg font-semibold">
@@ -122,7 +122,7 @@ function VaultWorkspace() {
                 ))}
               </div>
             ) : (
-              // Empty state shown when the user has no saved vault records.
+              // empty state for users who have not saved any records yet
               <div className="mt-8 rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center shadow-sm">
                 <h2 className="text-xl font-semibold">
                   No passwords saved yet

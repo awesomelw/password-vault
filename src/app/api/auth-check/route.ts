@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyRequestUser } from "@/lib/auth/serverAuth";
 
 export async function GET(request: Request) {
-  // Confirms this API request belongs to a logged-in Firebase user.
+  // confirm this api request belongs to a signed-in firebase user
   const user = await verifyRequestUser(request);
 
   if (!user) {

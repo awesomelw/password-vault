@@ -10,7 +10,7 @@ if (!projectId || !clientEmail || !privateKey) {
   throw new Error("Missing Firebase Admin environment variables.");
 }
 
-// Reuses the Admin app if this server file runs more than once.
+// reuse the admin app if this server file runs more than once
 const adminApp = getApps().length
   ? getApps()[0]
   : initializeApp({
@@ -21,8 +21,8 @@ const adminApp = getApps().length
       }),
     });
 
-// Server Firebase Auth instance used to verify user ID tokens.
+// server firebase auth instance for verifying user id tokens
 export const adminAuth = getAuth(adminApp);
 
-// Server Firestore instance used by API routes.
+// server firestore instance used by api routes
 export const adminDb = getFirestore(adminApp);

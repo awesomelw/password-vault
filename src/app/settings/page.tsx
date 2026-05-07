@@ -12,7 +12,7 @@ import {
 
 export default function SettingsPage() {
   const [selectedTimeout, setSelectedTimeout] = useState(
-    // Initializes from browser storage once this client component runs.
+    // initialize from browser storage once this client component runs
     () =>
       typeof window === "undefined"
         ? DEFAULT_INACTIVITY_TIMEOUT_MINUTES
@@ -25,7 +25,7 @@ export default function SettingsPage() {
       return;
     }
 
-    // Clears the saved message after the user sees it.
+    // clear the settings confirmation after a short delay
     const timeoutId = window.setTimeout(() => {
       setStatus("");
     }, 2000);
@@ -34,17 +34,17 @@ export default function SettingsPage() {
   }, [status]);
 
   function handleSaveSettings() {
-    // Saves the timeout choice used by protected pages.
+    // save the timeout used by protected pages
     saveInactivityTimeout(selectedTimeout);
     setStatus("Settings saved.");
   }
 
   return (
     <ProtectedPage>
-      {/* Settings page for vault security preferences. */}
+      {/* settings page for vault security preferences */}
       <main className="min-h-screen bg-zinc-100 px-6 py-8 text-zinc-950">
         <section className="mx-auto w-full max-w-3xl">
-          {/* Back link returns users to the vault workspace. */}
+          {/* back link returns users to the vault workspace */}
           <Link
             href="/vault"
             className="text-sm font-medium text-zinc-600 transition hover:text-zinc-950"
@@ -61,7 +61,7 @@ export default function SettingsPage() {
               Choose how long the vault can stay idle before it locks.
             </p>
 
-            {/* Timeout options used by the inactivity logout hook. */}
+            {/* timeout options used by the inactivity logout hook */}
             <fieldset className="mt-8">
               <legend className="text-sm font-semibold text-zinc-900">
                 Auto-lock timer

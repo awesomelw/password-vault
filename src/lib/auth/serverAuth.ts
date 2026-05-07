@@ -7,11 +7,11 @@ function getBearerToken(request: Request) {
     return null;
   }
 
-  // Removes the "Bearer " prefix so Firebase Admin receives only the token.
+  // remove the "Bearer " prefix before firebase admin verifies the token
   return authHeader.slice("Bearer ".length);
 }
 
-// Verifies the Firebase ID token sent with a backend request.
+// verify the firebase id token sent with a backend request
 export async function verifyRequestUser(request: Request) {
   const token = getBearerToken(request);
 

@@ -5,17 +5,17 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 
-// Creates a Firebase account with email and password from the browser.
+// create a firebase account with email and password from the browser
 export function signUpWithEmail(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
 }
 
-// Signs in an existing Firebase account with email and password.
+// sign in an existing firebase account with email and password
 export function logInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
 }
 
-// Signs out the current Firebase user from the browser.
+// sign out the current firebase user from the browser
 export function logOut() {
   return signOut(auth);
 }

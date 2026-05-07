@@ -25,7 +25,7 @@ function getVaultItemDocument(uid: string, id: string) {
   return adminDb.collection("users").doc(uid).collection("vaultItems").doc(id);
 }
 
-// PATCH /api/vault/[id] updates one vault record owned by the current user.
+// PATCH: update one encrypted vault record for the verified user
 export async function PATCH(
   request: Request,
   { params }: VaultItemRouteContext,
@@ -53,7 +53,7 @@ export async function PATCH(
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  // Updates text fields only when valid values are provided.
+  // update text fields only when valid values are provided
   if (isNonEmptyString(body.service)) {
     updates.service = body.service.trim();
   }
@@ -66,8 +66,11 @@ export async function PATCH(
     updates.notes = body.notes.trim();
   }
 
-  // Updates encrypted password fields only when the frontend sends a new pair.
-  if (isNonEmptyString(body.encryptedPassword) || isNonEmptyString(body.passwordIv)) {
+  // password ciphertext and iv must be rotated together
+  if (
+    isNonEmptyString(body.encryptedPassword) ||
+    isNonEmptyString(body.passwordIv)
+  ) {
     if (
       !isNonEmptyString(body.encryptedPassword) ||
       !isNonEmptyString(body.passwordIv)
@@ -89,13 +92,13 @@ export async function PATCH(
     );
   }
 
-  // Applies the validated update fields to this user's vault item.
+  // apply validated changes inside this user's vault collection
   await getVaultItemDocument(user.uid, id).update(updates);
 
   return NextResponse.json({ success: true });
 }
 
-// DELETE /api/vault/[id] removes one vault record owned by the current user.
+// DELETE: remove one vault record for the verified user
 export async function DELETE(
   request: Request,
   { params }: VaultItemRouteContext,
@@ -118,7 +121,7 @@ export async function DELETE(
     );
   }
 
-  // Deletes only from the verified user's vault collection.
+  // delete only inside users/{uid}/vaultItems
   await getVaultItemDocument(user.uid, id).delete();
 
   return NextResponse.json({ success: true });

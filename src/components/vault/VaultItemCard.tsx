@@ -38,7 +38,7 @@ export default function VaultItemCard({
       return;
     }
 
-    // Clears short-lived success messages after the user sees them.
+    // keep success messages brief so the card returns to its normal layout
     const timeoutId = window.setTimeout(() => {
       setCopyStatus("");
       setEditStatus("");
@@ -51,13 +51,13 @@ export default function VaultItemCard({
     setRevealError("");
 
     if (revealedPassword) {
-      // Hide: remove the revealed password from this card's state.
+      // hide: remove the plaintext password from component state
       setRevealedPassword("");
       return;
     }
 
     try {
-      // Show: decrypt this password in the browser for temporary display.
+      // show: decrypt only inside the browser for temporary display
       const decrypted = await decryptPassword(
         item.encryptedPassword,
         item.passwordIv,
@@ -71,7 +71,7 @@ export default function VaultItemCard({
 
   async function handleCopyUsername() {
     try {
-      // Copy username: send the saved username directly to the clipboard.
+      // copy username: no decryption is needed for this field
       await navigator.clipboard.writeText(item.username);
       setCopyStatus("Username copied.");
     } catch {
@@ -81,7 +81,7 @@ export default function VaultItemCard({
 
   async function handleCopyPassword() {
     try {
-      // Copy password: reuse a visible password or decrypt it before copying.
+      // copy password: reuse the revealed value or decrypt on demand
       const passwordToCopy =
         revealedPassword ||
         (await decryptPassword(item.encryptedPassword, item.passwordIv));
@@ -100,11 +100,11 @@ export default function VaultItemCard({
     setIsDeleting(true);
 
     try {
-      // Delete: remove this record from the user's Firestore vault collection.
+      // delete the record from this user's firestore vault collection
       await deleteVaultItem(item.id);
 
       try {
-        // Refreshes the list after the delete succeeds.
+        // refresh the dashboard after the delete completes
         await onVaultItemDeleted();
       } catch {
         setDeleteStatus("Password deleted, but the list did not refresh.");
@@ -120,7 +120,7 @@ export default function VaultItemCard({
     setEditStatus("");
     setEditError("");
 
-    // Requires the core display fields before updating Firestore.
+    // keep service and username present so edited records stay readable
     if (!editService.trim() || !editUsername.trim()) {
       setEditError("Service and username are required.");
       return;
@@ -142,19 +142,19 @@ export default function VaultItemCard({
       };
 
       if (editPassword) {
-        // Re-encrypts only when the user enters a new password.
+        // only rotate encrypted password fields when a new password is entered
         const encryptedValue = await encryptPassword(editPassword);
         updates.encryptedPassword = encryptedValue.encryptedPassword;
         updates.passwordIv = encryptedValue.passwordIv;
       }
 
-      // PATCH updates this existing vault item instead of creating a new one.
+      // patch keeps the same record id while updating changed fields
       await updateVaultItem(item.id, updates);
       setEditPassword("");
       setRevealedPassword("");
 
       try {
-        // Refreshes the list after the update succeeds.
+        // refresh the dashboard with the latest saved fields
         await onVaultItemUpdated();
       } catch {
         setEditStatus("Password updated, but the list did not refresh.");
@@ -171,7 +171,7 @@ export default function VaultItemCard({
   }
 
   function handleCancelEdit() {
-    // Restores the edit form back to the last loaded item values.
+    // discard draft edits and restore the last loaded item values
     setEditService(item.service);
     setEditUsername(item.username);
     setEditPassword("");

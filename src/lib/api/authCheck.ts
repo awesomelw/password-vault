@@ -12,7 +12,7 @@ export async function checkBackendAuth(): Promise<AuthCheckResponse> {
     throw new Error("No logged-in Firebase user.");
   }
 
-  // Gets a fresh Firebase ID token for the backend to verify.
+  // get a fresh firebase id token for the backend to verify
   const token = await user.getIdToken();
 
   const response = await fetch("/api/auth-check", {

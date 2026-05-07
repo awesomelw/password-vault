@@ -24,7 +24,7 @@ export default function AddPasswordForm({
       return;
     }
 
-    // Clears the saved message after the user sees it.
+    // clear the save confirmation after a short delay
     const timeoutId = window.setTimeout(() => {
       setAddFormStatus("");
     }, 2000);
@@ -37,7 +37,7 @@ export default function AddPasswordForm({
     setAddFormStatus("");
     setAddFormError("");
 
-    // Validates the required vault fields before encrypting anything.
+    // require the fields needed to create a usable vault record
     if (!service.trim() || !username.trim() || !password) {
       setAddFormError("Service, username, and password are required.");
       return;
@@ -46,10 +46,10 @@ export default function AddPasswordForm({
     setIsSavingPassword(true);
 
     try {
-      // Encrypts the password in the browser before sending it to the backend.
+      // keep plaintext passwords in the browser; send only encrypted data
       const encryptedValue = await encryptPassword(password);
 
-      // Sends only encrypted password data to the Firestore-backed API route.
+      // api route stores this record under the signed-in user's vault
       await createVaultItem({
         service,
         username,
@@ -65,7 +65,7 @@ export default function AddPasswordForm({
       setAddFormStatus("Password saved.");
 
       try {
-        // Refreshes the list after the save succeeds.
+        // pull the saved record into the dashboard list
         await onPasswordCreated();
       } catch {
         setAddFormError("Password saved, but the list did not refresh.");
@@ -78,7 +78,7 @@ export default function AddPasswordForm({
   }
 
   return (
-    // Add-password form that encrypts before saving.
+    // form for creating a new encrypted vault record
     <form
       className="mt-6 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
       onSubmit={handleAddPassword}

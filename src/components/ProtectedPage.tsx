@@ -16,28 +16,28 @@ export default function ProtectedPage({ children }: ProtectedPageProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Watches Firebase auth state before showing private pages.
+    // wait for firebase to restore the session before rendering private pages
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.replace("/login");
         return;
       }
 
-      // Once authenticated, private pages can render and start idle tracking.
+      // private content and idle tracking start only after auth is confirmed
       setIsAuthenticated(true);
       setIsCheckingAuth(false);
     });
 
-    // Removes the Firebase listener when the page unloads.
+    // detach the auth listener when this guard unmounts
     return unsubscribe;
   }, [router]);
 
-  // Applies inactivity logout only after Firebase confirms a session.
+  // idle logout is active only for confirmed sessions
   useInactivityLogout(isAuthenticated);
 
   if (isCheckingAuth) {
     return (
-      // Loading screen shown while Firebase checks the current session.
+      // session restore screen shown before protected content renders
       <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-6 text-zinc-950">
         <p className="rounded-lg border border-zinc-200 bg-white px-5 py-4 text-sm font-medium shadow-sm">
           Checking your session...

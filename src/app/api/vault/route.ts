@@ -19,7 +19,7 @@ function getVaultItemsCollection(uid: string) {
   return adminDb.collection("users").doc(uid).collection("vaultItems");
 }
 
-// GET /api/vault loads the current user's vault records.
+// GET: load encrypted vault records for the verified user
 export async function GET(request: Request) {
   const user = await verifyRequestUser(request);
 
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     );
   }
 
-  // Reads only the vault items owned by the verified Firebase user.
+  // scope the query to this user's vault subcollection
   const snapshot = await getVaultItemsCollection(user.uid)
     .orderBy("createdAt", "desc")
     .get();
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   return NextResponse.json({ items });
 }
 
-// POST /api/vault creates a new encrypted vault record.
+// POST: create an encrypted vault record for the verified user
 export async function POST(request: Request) {
   const user = await verifyRequestUser(request);
 
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as CreateVaultItemBody;
   const { service, username, encryptedPassword, passwordIv, notes } = body;
 
-  // Requires encrypted password data so plaintext never reaches Firestore.
+  // reject writes without browser-encrypted password data
   if (
     !isNonEmptyString(service) ||
     !isNonEmptyString(username) ||
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  // Stores the new record inside the verified user's vault collection.
+  // store records under users/{uid}/vaultItems for user isolation
   const docRef = await getVaultItemsCollection(user.uid).add(item);
 
   return NextResponse.json(

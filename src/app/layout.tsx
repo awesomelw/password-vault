@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  // Sets the default browser tab title and page description.
+  // set the default browser tab title and page description
   title: "Password Vault",
   description:
     "A fullstack encrypted password vault with secure authentication and public-page monetization.",

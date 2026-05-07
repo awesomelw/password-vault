@@ -21,7 +21,7 @@ async function getAuthHeaders() {
     throw new Error("No logged-in Firebase user.");
   }
 
-  // Sends the Firebase ID token so backend routes can verify the user.
+  // send the firebase id token so backend routes can verify the user
   const token = await user.getIdToken();
 
   return {

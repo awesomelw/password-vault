@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Sets the shared color and font defaults for the app. */
+/* shared color and font defaults for the app */
 :root {
   --background: #ffffff;
   --foreground: #171717;

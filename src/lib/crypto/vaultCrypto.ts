@@ -8,7 +8,7 @@ type EncryptedPassword = {
   passwordIv: string;
 };
 
-// Converts encrypted bytes into text that can be sent to the API and Firestore.
+// encode binary ciphertext as firestore-safe text
 function bytesToBase64(bytes: Uint8Array) {
   let binary = "";
 
@@ -19,7 +19,7 @@ function bytesToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-// Converts stored base64 text back into bytes for Web Crypto.
+// decode stored ciphertext back into bytes for web crypto
 function base64ToBytes(value: string) {
   const binary = atob(value);
   const bytes = new Uint8Array(binary.length);
@@ -32,7 +32,7 @@ function base64ToBytes(value: string) {
 }
 
 async function importStoredKey(base64Key: string) {
-  // Imports the saved raw AES key back into the Web Crypto API.
+  // restore the browser-held aes key after a page refresh
   return crypto.subtle.importKey(
     "raw",
     base64ToBytes(base64Key),
@@ -43,7 +43,7 @@ async function importStoredKey(base64Key: string) {
 }
 
 async function createStoredKey() {
-  // Generates a new AES-GCM key for encrypting and decrypting vault passwords.
+  // create the local aes-gcm key used for this browser's vault records
   const key = await crypto.subtle.generateKey(
     {
       name: AES_GCM_ALGORITHM,
@@ -54,7 +54,7 @@ async function createStoredKey() {
   );
 
   const rawKey = await crypto.subtle.exportKey("raw", key);
-  // Stores the demo key locally so this browser can decrypt after refresh.
+  // store the key locally so this browser can decrypt saved records later
   localStorage.setItem(
     VAULT_KEY_STORAGE_NAME,
     bytesToBase64(new Uint8Array(rawKey)),
@@ -66,12 +66,12 @@ async function createStoredKey() {
 async function getVaultKey() {
   const storedKey = localStorage.getItem(VAULT_KEY_STORAGE_NAME);
 
-  // Reuses the browser-held key so saved records can decrypt after refresh.
+  // use the existing browser-held key when one has already been created
   if (storedKey) {
     return importStoredKey(storedKey);
   }
 
-  // Creates the first local AES key for this browser profile.
+  // first use in this browser creates the vault key
   return createStoredKey();
 }
 
@@ -79,11 +79,11 @@ export async function encryptPassword(
   password: string,
 ): Promise<EncryptedPassword> {
   const key = await getVaultKey();
-  // AES-GCM needs a fresh IV for every password encryption.
+  // aes-gcm uses a fresh iv for every password encryption
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH_BYTES));
   const encodedPassword = new TextEncoder().encode(password);
 
-  // AES-GCM returns encrypted bytes that are safe to store after base64 encoding.
+  // ciphertext is encoded before it leaves the browser
   const encryptedBytes = await crypto.subtle.encrypt(
     {
       name: AES_GCM_ALGORITHM,
@@ -104,11 +104,11 @@ export async function decryptPassword(
   passwordIv: string,
 ) {
   const key = await getVaultKey();
-  // Restores the encrypted password and IV from Firestore-safe text.
+  // restore the stored ciphertext and iv before decrypting
   const encryptedBytes = base64ToBytes(encryptedPassword);
   const iv = base64ToBytes(passwordIv);
 
-  // Decrypts the stored bytes back into the original password text.
+  // plaintext exists only in browser memory after this point
   const decryptedBytes = await crypto.subtle.decrypt(
     {
       name: AES_GCM_ALGORITHM,

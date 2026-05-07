@@ -19,7 +19,7 @@ export default function SignupPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Checks the form locally before sending anything to Firebase.
+    // validate account fields before calling firebase auth
     if (!email.trim() || !password || !confirmPassword) {
       setError("All fields are required.");
       setIsSubmitting(false);
@@ -39,13 +39,13 @@ export default function SignupPage() {
     }
 
     try {
-      // Creates the Firebase account after the local form checks pass.
+      // create the firebase account after local checks pass
       await signUpWithEmail(email.trim(), password);
 
-      // Firebase signs the user in after signup, so send them to the vault.
+      // firebase signs the user in after signup, so send them to the vault
       router.push("/vault");
     } catch (caughtError) {
-      // Converts common Firebase errors into messages the user can act on.
+      // convert common firebase errors into messages the user can act on
       if (caughtError instanceof FirebaseError) {
         if (caughtError.code === "auth/email-already-in-use") {
           setError("That email is already registered.");
@@ -65,10 +65,10 @@ export default function SignupPage() {
   }
 
   return (
-    // Signup page for new Firebase users.
+    // signup page for new firebase users
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 py-10 text-white">
       <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/4 p-6 shadow-2xl shadow-black/30">
-        {/* Simple route links for moving between public auth pages. */}
+        {/* public auth navigation */}
         <div className="mb-8 flex items-center justify-between text-sm">
           <Link href="/" className="font-semibold text-white">
             Password Vault
@@ -94,7 +94,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {/* Signup form connected to Firebase Auth. */}
+        {/* signup form connected to firebase auth */}
         <form className="mt-8 space-y-5" onSubmit={handleSignup}>
           <label className="block">
             <span className="text-sm font-medium text-zinc-200">Email</span>

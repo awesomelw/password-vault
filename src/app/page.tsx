@@ -9,10 +9,10 @@ const features = [
 
 export default function Home() {
   return (
-    // Public landing page shown before users log in.
+    // public landing page shown before users log in
     <main className="min-h-screen bg-zinc-950 text-white">
       <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-6 sm:px-8 lg:px-10">
-        {/* Top navigation for public pages. */}
+        {/* top navigation for public pages */}
         <header className="flex items-center justify-between border-b border-white/10 pb-5">
           <Link href="/" className="text-lg font-semibold tracking-wide">
             Password Vault
@@ -35,7 +35,7 @@ export default function Home() {
         </header>
 
         <div className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1.08fr_0.92fr]">
-          {/* Main headline and sign-up actions. */}
+          {/* main headline and sign-up actions */}
           <section className="max-w-2xl">
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-emerald-300">
               Secure password storage
@@ -65,7 +65,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Preview of the main vault features. */}
+          {/* preview of the main vault features */}
           <aside className="rounded-lg border border-white/10 bg-white/4 p-5 shadow-2xl shadow-black/30">
             <div className="rounded-md border border-emerald-300/20 bg-emerald-300/10 p-4">
               <p className="text-sm font-medium text-emerald-200">
@@ -81,7 +81,7 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Placeholder for a future AdSense unit on public pages. */}
+            {/* placeholder for a future adsense unit on public pages */}
             <div className="mt-5 rounded-md border border-dashed border-white/20 p-5 text-center">
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
                 Sponsored space

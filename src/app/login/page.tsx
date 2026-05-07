@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Checks required fields before calling Firebase.
+    // require credentials before calling firebase auth
     if (!email.trim() || !password) {
       setError("Please enter both email and password.");
       setIsSubmitting(false);
@@ -26,11 +26,11 @@ export default function LoginPage() {
     }
 
     try {
-      // Signs in the Firebase user and opens the vault on success.
+      // sign in with firebase and open the vault on success
       await logInWithEmail(email.trim(), password);
       router.push("/vault");
     } catch (caughtError) {
-      // Keeps login errors clear without exposing raw Firebase messages.
+      // keep login errors clear without exposing raw firebase messages
       if (caughtError instanceof FirebaseError) {
         if (caughtError.code === "auth/invalid-email") {
           setError("Please enter a valid email address.");
@@ -54,10 +54,10 @@ export default function LoginPage() {
   }
 
   return (
-    // Login page for existing Firebase users.
+    // login page for existing firebase users
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 py-10 text-white">
       <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/4 p-6 shadow-2xl shadow-black/30">
-        {/* Simple route links for moving between public auth pages. */}
+        {/* public auth navigation */}
         <div className="mb-8 flex items-center justify-between text-sm">
           <Link href="/" className="font-semibold text-white">
             Password Vault
@@ -82,7 +82,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Login form connected to Firebase Auth. */}
+        {/* login form connected to firebase auth */}
         <form className="mt-8 space-y-5" onSubmit={handleLogin}>
           <label className="block">
             <span className="text-sm font-medium text-zinc-200">Email</span>

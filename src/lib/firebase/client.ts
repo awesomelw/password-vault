@@ -22,7 +22,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Reuses an existing Firebase app
+// reuse the browser firebase app across next.js hot reloads
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -32,12 +32,12 @@ if (typeof window !== "undefined" && recaptchaSiteKey) {
     process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN === "true";
 
   if (isAppCheckDebugMode) {
-    // Allows Firebase App Check to run locally while we test the setup.
+    // enable the registered local debug token during development
     window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
   if (!globalThis.firebaseAppCheckInitialized) {
-    // Invisible reCAPTCHA check used by Firebase App Check for browser requests.
+    // app check attaches invisible recaptcha-backed proof to firebase requests
     const appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true,
@@ -46,12 +46,12 @@ if (typeof window !== "undefined" && recaptchaSiteKey) {
     globalThis.firebaseAppCheckInitialized = true;
 
     if (isAppCheckDebugMode) {
-      // Forces a local debug token request so Firebase prints it in DevTools.
+      // request a token immediately so the local debug token appears in devtools
       getToken(appCheck).catch(() => {});
     }
   }
 }
 
-// Browser Firebase Auth instance used by login and signup pages.
+// shared browser auth instance for signup, login, logout, and id tokens
 export const auth = getAuth(app);
 export { app };
