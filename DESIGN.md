@@ -84,12 +84,9 @@ Local storage helpers for the auto-lock timeout
 This keeps vault loading from running before Firebase finishes restoring the current user.
 
 ```text
-VaultPage
-src/app/vault/page.tsx
--> ProtectedPage
-src/components/ProtectedPage.tsx
--> VaultWorkspace
-src/app/vault/page.tsx
+VaultPage (src/app/vault/page.tsx)
+-> ProtectedPage (src/components/ProtectedPage.tsx)
+-> VaultWorkspace (src/app/vault/page.tsx)
 -> vault dashboard UI
 ```
 
@@ -99,7 +96,7 @@ src/app/vault/page.tsx
 
 ```text
 /vault or /settings
--> ProtectedPage
+-> ProtectedPage (src/components/ProtectedPage.tsx)
 -> onAuthStateChanged(auth)
 -> Firebase Auth
 -> user exists: render page
@@ -120,7 +117,7 @@ Those helpers handle:
 
 ```text
 React component
--> src/lib/api/vaultApi.ts
+-> API helper (src/lib/api/vaultApi.ts)
 -> Firebase ID token from auth.currentUser
 -> fetch("/api/vault...", Authorization header)
 -> Next.js API route
@@ -132,8 +129,7 @@ Plaintext passwords should not reach the backend. The browser encrypts the passw
 
 ```text
 plaintext password
--> encryptPassword(password)
-src/lib/crypto/vaultCrypto.ts
+-> encryptPassword(password) (src/lib/crypto/vaultCrypto.ts)
 -> encryptedPassword + passwordIv
 -> API route
 -> Firestore
@@ -144,28 +140,17 @@ Current key note: this version stores the AES key in browser local storage, so t
 ## Add Password Flow
 
 ```text
-VaultWorkspace
-src/app/vault/page.tsx
--> AddPasswordForm
-src/components/vault/AddPasswordForm.tsx
--> handleAddPassword()
-src/components/vault/AddPasswordForm.tsx
--> encryptPassword(password)
-src/lib/crypto/vaultCrypto.ts
--> createVaultItem(...)
-src/lib/api/vaultApi.ts
--> POST: /api/vault
-src/app/api/vault/route.ts
--> verifyRequestUser(request)
-src/lib/auth/serverAuth.ts
--> adminAuth.verifyIdToken(token)
-src/lib/firebase/admin.ts
--> adminDb writes encrypted record
-src/app/api/vault/route.ts
--> Cloud Firestore
-users/{uid}/vaultItems/{itemId}
--> refreshVaultItems()
-src/app/vault/page.tsx
+VaultWorkspace (src/app/vault/page.tsx)
+-> AddPasswordForm (src/components/vault/AddPasswordForm.tsx)
+-> handleAddPassword() (src/components/vault/AddPasswordForm.tsx)
+-> encryptPassword(password) (src/lib/crypto/vaultCrypto.ts)
+-> createVaultItem(...) (src/lib/api/vaultApi.ts)
+-> POST: /api/vault (src/app/api/vault/route.ts)
+-> verifyRequestUser(request) (src/lib/auth/serverAuth.ts)
+-> adminAuth.verifyIdToken(token) (src/lib/firebase/admin.ts)
+-> adminDb writes encrypted record (src/app/api/vault/route.ts)
+-> Cloud Firestore (users/{uid}/vaultItems/{itemId})
+-> refreshVaultItems() (src/app/vault/page.tsx)
 ```
 
 What happens in that flow:
@@ -181,26 +166,16 @@ What happens in that flow:
 ## Load Vault Records Flow
 
 ```text
-VaultWorkspace mounts
-src/app/vault/page.tsx
--> checkBackendAuth()
-src/lib/api/authCheck.ts
--> GET: /api/auth-check
-src/app/api/auth-check/route.ts
--> verifyRequestUser(request)
-src/lib/auth/serverAuth.ts
--> Firebase Admin verifies token
-src/lib/firebase/admin.ts
--> refreshVaultItems()
-src/app/vault/page.tsx
--> getVaultItems()
-src/lib/api/vaultApi.ts
--> GET: /api/vault
-src/app/api/vault/route.ts
--> query users/{uid}/vaultItems
-Cloud Firestore
--> VaultItemCard list
-src/components/vault/VaultItemCard.tsx
+VaultWorkspace mounts (src/app/vault/page.tsx)
+-> checkBackendAuth() (src/lib/api/authCheck.ts)
+-> GET: /api/auth-check (src/app/api/auth-check/route.ts)
+-> verifyRequestUser(request) (src/lib/auth/serverAuth.ts)
+-> Firebase Admin verifies token (src/lib/firebase/admin.ts)
+-> refreshVaultItems() (src/app/vault/page.tsx)
+-> getVaultItems() (src/lib/api/vaultApi.ts)
+-> GET: /api/vault (src/app/api/vault/route.ts)
+-> query users/{uid}/vaultItems (Cloud Firestore)
+-> VaultItemCard list (src/components/vault/VaultItemCard.tsx)
 ```
 
 The backend auth check confirms the server can verify the browser session. The vault list request then fetches only the records under that verified user's UID.
@@ -216,20 +191,14 @@ Copy username does not need decryption because usernames are stored as normal te
 ## Edit Password Flow
 
 ```text
-VaultItemCard
-src/components/vault/VaultItemCard.tsx
+VaultItemCard (src/components/vault/VaultItemCard.tsx)
 -> edit mode state
 -> handleSaveEdit()
--> optional encryptPassword(editPassword)
-src/lib/crypto/vaultCrypto.ts
--> updateVaultItem(id, updates)
-src/lib/api/vaultApi.ts
--> PATCH: /api/vault/[id]
-src/app/api/vault/[id]/route.ts
--> verifyRequestUser(request)
-src/lib/auth/serverAuth.ts
--> adminDb updates users/{uid}/vaultItems/{id}
-src/lib/firebase/admin.ts
+-> optional encryptPassword(editPassword) (src/lib/crypto/vaultCrypto.ts)
+-> updateVaultItem(id, updates) (src/lib/api/vaultApi.ts)
+-> PATCH: /api/vault/[id] (src/app/api/vault/[id]/route.ts)
+-> verifyRequestUser(request) (src/lib/auth/serverAuth.ts)
+-> adminDb updates users/{uid}/vaultItems/{id} (src/lib/firebase/admin.ts)
 ```
 
 Important details:
@@ -250,7 +219,7 @@ Actual auth work goes through `src/lib/auth/clientAuth.ts`, which wraps Firebase
 
 ```text
 LoginPage / SignupPage
--> clientAuth helper
+-> clientAuth helper (src/lib/auth/clientAuth.ts)
 -> Firebase Auth
 -> router.push("/vault")
 ```
@@ -260,8 +229,7 @@ Firebase signs the user in after successful signup, so the app can route directl
 ## App Check reCAPTCHA Flow
 
 ```text
-Browser loads Firebase client
-src/lib/firebase/client.ts
+Browser loads Firebase client (src/lib/firebase/client.ts)
 -> initializeAppCheck(...)
 -> invisible reCAPTCHA check
 -> reCAPTCHA token
@@ -275,25 +243,20 @@ Local development uses a registered Firebase App Check debug token so localhost 
 ## Inactivity Logout Flow
 
 ```text
-ProtectedPage confirms session
-src/components/ProtectedPage.tsx
--> useInactivityLogout(isAuthenticated)
-src/hooks/useInactivityLogout.ts
+ProtectedPage confirms session (src/components/ProtectedPage.tsx)
+-> useInactivityLogout(isAuthenticated) (src/hooks/useInactivityLogout.ts)
 -> listen for mousemove / keydown / click / scroll
 -> reset timer on activity
 -> saved timeout expires
--> logOut()
-src/lib/auth/clientAuth.ts
+-> logOut() (src/lib/auth/clientAuth.ts)
 -> router.replace("/login")
 ```
 
 Settings save the timeout here:
 
 ```text
-SettingsPage
-src/app/settings/page.tsx
--> saveInactivityTimeout(selectedTimeout)
-src/lib/settings/inactivity.ts
+SettingsPage (src/app/settings/page.tsx)
+-> saveInactivityTimeout(selectedTimeout) (src/lib/settings/inactivity.ts)
 -> localStorage
 password-vault-timeout-minutes
 ```
@@ -305,8 +268,7 @@ Ads are intentionally kept out of private routes.
 Current public placement:
 
 ```text
-Home page
-src/app/page.tsx
+Home page (src/app/page.tsx)
 -> sponsored-space placeholder
 -> future AdSense unit
 ```
