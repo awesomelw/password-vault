@@ -8,9 +8,9 @@ This document explains how the app is organized, how the frontend connects to th
 Browser UI -> Firebase Auth -> Next.js API routes -> Firebase Admin -> Cloud Firestore
 ```
 
-The browser owns the user interface, Firebase Auth session, App Check setup, and password encryption.
+The browser owns the user interface, Firebase Auth session, Firebase App Check setup, and password encryption.
 
-The backend API routes verify the signed-in user before reading or writing Firestore data.
+The backend API routes verify Firebase ID tokens before reading or writing Firestore data.
 
 Firestore stores encrypted vault records under the verified Firebase UID:
 
@@ -157,7 +157,7 @@ plaintext password
 -> Firestore
 ```
 
-Current key note: this version stores the AES key in browser local storage, so the same browser profile can decrypt records after refresh.
+Current key note: this version stores the AES key in browser local storage, so the same browser profile can decrypt records after refresh. The API does not need this vault key because it only stores and returns encrypted fields.
 
 ## Add Password Flow
 
@@ -260,6 +260,8 @@ Browser loads Firebase client (src/lib/firebase/client.ts)
 -> Firebase services
 ```
 
+App Check is initialized through the Firebase browser SDK. The app's own Next.js API routes still rely on Firebase ID tokens in the `Authorization` header for backend verification.
+
 Local development uses a registered Firebase App Check debug token so localhost can be trusted while testing.
 
 ## Inactivity Logout Flow
@@ -302,6 +304,8 @@ Private routes do not import an ad component:
 /vault
 /settings
 ```
+
+Real ads also require an approved AdSense account, a reviewed public site, a publisher/client ID, and an ad slot ID.
 
 ## Firestore Data Shape
 

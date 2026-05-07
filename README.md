@@ -23,7 +23,7 @@ Install dependencies:
 npm install
 ```
 
-Create `.env.local` from `.env.example` and fill in your Firebase values:
+Create `.env.local` from `.env.example` and fill in your Firebase values. AdSense values can stay blank for local development:
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
@@ -34,8 +34,8 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN=true
-NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-your_adsense_client_id
-NEXT_PUBLIC_ADSENSE_SLOT=your_adsense_slot_id
+NEXT_PUBLIC_ADSENSE_CLIENT=
+NEXT_PUBLIC_ADSENSE_SLOT=
 FIREBASE_ADMIN_PROJECT_ID=your_project_id
 FIREBASE_ADMIN_CLIENT_EMAIL=your_service_account_email
 FIREBASE_ADMIN_PRIVATE_KEY="your_private_key_with_escaped_newlines"
@@ -107,8 +107,8 @@ For real ads, AdSense requires an approved account, a reviewed public site, a pu
 ## Security Model
 
 - Firebase Authentication owns account signup, login, logout, and session restore.
-- Frontend requests include a Firebase ID token in the `Authorization` header.
-- Next.js API routes verify that token with Firebase Admin before reading or writing data.
+- Frontend requests to this app's API routes include a Firebase ID token in the `Authorization` header.
+- Next.js API routes verify that ID token with Firebase Admin before reading or writing data.
 - Firestore records are scoped by Firebase UID under `users/{uid}/vaultItems`.
 - Plaintext passwords are encrypted in the browser before they are sent to the backend.
 - Firestore stores `encryptedPassword` and `passwordIv`, not the plaintext password.
@@ -116,7 +116,7 @@ For real ads, AdSense requires an approved account, a reviewed public site, a pu
 - Private pages are wrapped with `ProtectedPage`.
 - Inactivity logout redirects idle users back to login.
 
-Current encryption note: this first version stores the vault encryption key in the browser's local storage, so records are decryptable from the same browser profile. See `DESIGN.md` for the detailed flow.
+Current encryption note: this first version stores the vault encryption key in the browser's local storage, so records are decryptable from the same browser profile. That vault key is separate from the Firebase Admin credentials used by the backend. See `DESIGN.md` for the detailed flow.
 
 ## Project Structure
 
