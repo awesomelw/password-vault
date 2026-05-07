@@ -1,6 +1,6 @@
 "use client";
 
-import { type SubmitEvent, useState } from "react";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { createVaultItem } from "@/lib/api/vaultApi";
 import { encryptPassword } from "@/lib/crypto/vaultCrypto";
 
@@ -18,6 +18,19 @@ export default function AddPasswordForm({
   const [addFormStatus, setAddFormStatus] = useState("");
   const [addFormError, setAddFormError] = useState("");
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  useEffect(() => {
+    if (!addFormStatus) {
+      return;
+    }
+
+    // Clears the saved message after the user sees it.
+    const timeoutId = window.setTimeout(() => {
+      setAddFormStatus("");
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [addFormStatus]);
 
   async function handleAddPassword(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();

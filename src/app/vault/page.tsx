@@ -117,6 +117,7 @@ export default function VaultPage() {
                       key={item.id}
                       item={item}
                       onVaultItemDeleted={refreshVaultItems}
+                      onVaultItemUpdated={refreshVaultItems}
                     />
                   ))}
                 </div>

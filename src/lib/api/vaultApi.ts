@@ -8,6 +8,8 @@ type CreateVaultItemInput = {
   notes?: string;
 };
 
+type UpdateVaultItemInput = Partial<CreateVaultItemInput>;
+
 export type VaultItem = CreateVaultItemInput & {
   id: string;
 };
@@ -66,6 +68,23 @@ export async function deleteVaultItem(id: string) {
 
   if (!response.ok) {
     throw new Error("Unable to delete vault item.");
+  }
+
+  return response.json();
+}
+
+export async function updateVaultItem(id: string, input: UpdateVaultItemInput) {
+  const response = await fetch(`/api/vault/${id}`, {
+    method: "PATCH",
+    headers: {
+      ...(await getAuthHeaders()),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to update vault item.");
   }
 
   return response.json();
