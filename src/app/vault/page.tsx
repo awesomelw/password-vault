@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import ProtectedPage from "@/components/ProtectedPage";
+import { checkBackendAuth } from "@/lib/api/authCheck";
 import { logOut } from "@/lib/auth/clientAuth";
 
 const accessControls = ["Reveal", "Copy username", "Copy password"];
@@ -10,6 +12,18 @@ const managementControls = ["Add", "Edit", "Delete"];
 
 export default function VaultPage() {
   const router = useRouter();
+  const [backendAuthStatus, setBackendAuthStatus] = useState("Checking backend...");
+
+  useEffect(() => {
+    // Confirms the backend can verify the logged-in Firebase user.
+    checkBackendAuth()
+      .then((user) => {
+        setBackendAuthStatus(`Backend verified ${user.email ?? user.uid}`);
+      })
+      .catch(() => {
+        setBackendAuthStatus("Backend verification failed.");
+      });
+  }, []);
 
   async function handleLogout() {
     // Signs out through Firebase before leaving the vault page.
@@ -30,6 +44,9 @@ export default function VaultPage() {
               </Link>
               <p className="mt-1 text-sm text-zinc-600">
                 Manage saved logins from one private workspace.
+              </p>
+              <p className="mt-2 text-xs font-medium text-emerald-700">
+                {backendAuthStatus}
               </p>
             </div>
 
