@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdSenseUnit from "@/components/ads/AdSenseUnit";
 
 const features = [
   "Private saved logins",
@@ -81,16 +82,7 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* placeholder for a future adsense unit on public pages */}
-            <div className="mt-5 rounded-md border border-dashed border-white/20 p-5 text-center">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
-                Sponsored space
-              </p>
-              <p className="mt-2 text-sm text-zinc-300">
-                Public pages can support ads while private vault screens stay
-                clean.
-              </p>
-            </div>
+            <AdSenseUnit />
           </aside>
         </div>
       </section>

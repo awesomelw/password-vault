@@ -15,24 +15,6 @@ A fullstack password vault built with Next.js, Firebase Authentication, Cloud Fi
 - Firebase App Check with invisible reCAPTCHA for browser request protection
 - Public landing page with sponsored-space placement kept outside private vault screens
 
-## Project Structure
-
-```text
-src/app
-Next.js routes, pages, layouts, and API route handlers
-
-src/components
-Shared React components and vault-specific UI
-
-src/lib
-Firebase setup, auth helpers, API clients, crypto helpers, and settings helpers
-
-src/hooks
-Client-side hooks such as inactivity logout
-```
-
-For detailed file responsibilities and request flow diagrams, see `DESIGN.md`.
-
 ## Local Setup
 
 Install dependencies:
@@ -52,6 +34,8 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN=true
+NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-your_adsense_client_id
+NEXT_PUBLIC_ADSENSE_SLOT=your_adsense_slot_id
 FIREBASE_ADMIN_PROJECT_ID=your_project_id
 FIREBASE_ADMIN_CLIENT_EMAIL=your_service_account_email
 FIREBASE_ADMIN_PRIVATE_KEY="your_private_key_with_escaped_newlines"
@@ -105,6 +89,21 @@ Manage debug tokens
 
 Leave enforcement off until local signup, login, vault loading, and Firestore writes work.
 
+## AdSense
+
+The landing page includes an AdSense-ready component in the sponsored-space area. Ads are not imported into `/vault` or `/settings`.
+
+Local development can leave these values blank:
+
+```env
+NEXT_PUBLIC_ADSENSE_CLIENT=
+NEXT_PUBLIC_ADSENSE_SLOT=
+```
+
+When those values are empty, the app shows the sponsored-space placeholder instead of loading an ad.
+
+For real ads, AdSense requires an approved account, a reviewed public site, a publisher/client ID, and an ad slot ID. A local-only app can keep the integration code, but real ads usually require a public URL for Google review.
+
 ## Security Model
 
 - Firebase Authentication owns account signup, login, logout, and session restore.
@@ -118,6 +117,24 @@ Leave enforcement off until local signup, login, vault loading, and Firestore wr
 - Inactivity logout redirects idle users back to login.
 
 Current encryption note: this first version stores the vault encryption key in the browser's local storage, so records are decryptable from the same browser profile. See `DESIGN.md` for the detailed flow.
+
+## Project Structure
+
+```text
+src/app
+Next.js routes, pages, layouts, and API route handlers
+
+src/components
+Shared React components and vault-specific UI
+
+src/lib
+Firebase setup, auth helpers, API clients, crypto helpers, and settings helpers
+
+src/hooks
+Client-side hooks such as inactivity logout
+```
+
+For detailed file responsibilities and request flow diagrams, see `DESIGN.md`.
 
 ## Local Checks
 

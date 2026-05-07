@@ -18,6 +18,25 @@ Firestore stores encrypted vault records under the verified Firebase UID:
 users/{uid}/vaultItems/{itemId}
 ```
 
+## Route Summary
+
+```text
+GET: /api/auth-check
+verify the current Firebase ID token
+
+GET: /api/vault
+load encrypted vault records for the verified user
+
+POST: /api/vault
+create an encrypted vault record for the verified user
+
+PATCH: /api/vault/[id]
+update one encrypted vault record for the verified user
+
+DELETE: /api/vault/[id]
+remove one vault record for the verified user
+```
+
 ## Main File Responsibilities
 
 ```text
@@ -44,6 +63,9 @@ Form for creating encrypted vault records
 
 src/components/vault/VaultItemCard.tsx
 Per-record controls for reveal, hide, copy, edit, and delete
+
+src/components/ads/AdSenseUnit.tsx
+Landing-page ad slot with a local placeholder fallback
 
 src/hooks/useInactivityLogout.ts
 Idle timer used on protected pages
@@ -269,8 +291,9 @@ Current public placement:
 
 ```text
 Home page (src/app/page.tsx)
--> sponsored-space placeholder
--> future AdSense unit
+-> AdSenseUnit (src/components/ads/AdSenseUnit.tsx)
+-> real ad when AdSense env vars exist
+-> sponsored-space placeholder when env vars are empty
 ```
 
 Private routes do not import an ad component:
@@ -297,22 +320,3 @@ users
 ```
 
 The `uid` comes from the verified Firebase ID token, not from the request body.
-
-## Route Summary
-
-```text
-GET: /api/auth-check
-verify the current Firebase ID token
-
-GET: /api/vault
-load encrypted vault records for the verified user
-
-POST: /api/vault
-create an encrypted vault record for the verified user
-
-PATCH: /api/vault/[id]
-update one encrypted vault record for the verified user
-
-DELETE: /api/vault/[id]
-remove one vault record for the verified user
-```
