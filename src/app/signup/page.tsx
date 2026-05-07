@@ -65,7 +65,7 @@ export default function SignupPage() {
   }
 
   return (
-    // Signup page shell before Firebase account creation is connected.
+    // Signup page for new Firebase users.
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 py-10 text-white">
       <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/4 p-6 shadow-2xl shadow-black/30">
         {/* Simple route links for moving between public auth pages. */}
@@ -94,7 +94,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {/* Static form for the first UI pass. */}
+        {/* Signup form connected to Firebase Auth. */}
         <form className="mt-8 space-y-5" onSubmit={handleSignup}>
           <label className="block">
             <span className="text-sm font-medium text-zinc-200">Email</span>

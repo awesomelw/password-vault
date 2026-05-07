@@ -54,7 +54,7 @@ export default function LoginPage() {
   }
 
   return (
-    // Login page shell before Firebase authentication is connected.
+    // Login page for existing Firebase users.
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 py-10 text-white">
       <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/4 p-6 shadow-2xl shadow-black/30">
         {/* Simple route links for moving between public auth pages. */}
@@ -82,7 +82,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Static form for the first UI pass. */}
+        {/* Login form connected to Firebase Auth. */}
         <form className="mt-8 space-y-5" onSubmit={handleLogin}>
           <label className="block">
             <span className="text-sm font-medium text-zinc-200">Email</span>

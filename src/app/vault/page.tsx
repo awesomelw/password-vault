@@ -21,8 +21,6 @@ export default function VaultPage() {
 // Separate out vault workspace to avoid loading issues.
 function VaultWorkspace() {
   const router = useRouter();
-  const [backendAuthStatus, setBackendAuthStatus] =
-    useState("Checking backend...");
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
   const [itemsError, setItemsError] = useState("");
@@ -37,15 +35,13 @@ function VaultWorkspace() {
   useEffect(() => {
     async function loadVault() {
       try {
-        // Confirms the backend can verify the logged-in Firebase user.
-        const user = await checkBackendAuth();
-        setBackendAuthStatus(`Backend verified ${user.email ?? user.uid}`);
+        // Confirms the backend accepts this signed-in Firebase session.
+        await checkBackendAuth();
 
         // Loads encrypted vault records owned by the verified user.
         await refreshVaultItems();
       } catch {
-        setBackendAuthStatus("Backend verification failed.");
-        setItemsError("Unable to load vault records.");
+        setItemsError("We could not load your vault. Try refreshing the page.");
       } finally {
         setIsLoadingItems(false);
       }
@@ -73,9 +69,6 @@ function VaultWorkspace() {
             <p className="mt-1 text-sm text-zinc-600">
               Manage saved logins from one private workspace.
             </p>
-            <p className="mt-2 text-xs font-medium text-emerald-700">
-              {backendAuthStatus}
-            </p>
           </div>
 
           <nav className="flex items-center gap-3 text-sm">
@@ -102,13 +95,16 @@ function VaultWorkspace() {
                 Vault
               </p>
               <h1 className="mt-2 text-3xl font-semibold">Saved passwords</h1>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-600">
+                Store, update, and copy login details from your encrypted vault.
+              </p>
             </div>
 
             <AddPasswordForm onPasswordCreated={refreshVaultItems} />
 
             {isLoadingItems ? (
               <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-6 text-sm font-medium text-zinc-600 shadow-sm">
-                Loading vault records...
+                Loading saved passwords...
               </div>
             ) : itemsError ? (
               <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-700 shadow-sm">
@@ -132,9 +128,8 @@ function VaultWorkspace() {
                   No passwords saved yet
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-zinc-600">
-                  Once encrypted records are added, saved logins will appear
-                  here with controls to reveal, copy, edit, or delete each
-                  record.
+                  Add your first login above. Saved records will appear here
+                  with controls to reveal, copy, edit, or delete each entry.
                 </p>
               </div>
             )}

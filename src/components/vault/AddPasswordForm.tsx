@@ -83,6 +83,13 @@ export default function AddPasswordForm({
       className="mt-6 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
       onSubmit={handleAddPassword}
     >
+      <div className="mb-5">
+        <h2 className="text-lg font-semibold text-zinc-950">Add login</h2>
+        <p className="mt-1 text-sm text-zinc-600">
+          Save a service, username, password, and optional note.
+        </p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="text-sm font-medium text-zinc-700">Service</span>
