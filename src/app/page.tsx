@@ -66,7 +66,7 @@ export default function Home() {
           </section>
 
           {/* Preview of the main vault features. */}
-          <aside className="rounded-lg border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/30">
+          <aside className="rounded-lg border border-white/10 bg-white/4 p-5 shadow-2xl shadow-black/30">
             <div className="rounded-md border border-emerald-300/20 bg-emerald-300/10 p-4">
               <p className="text-sm font-medium text-emerald-200">
                 Vault essentials

@@ -67,7 +67,7 @@ export default function SignupPage() {
   return (
     // Signup page shell before Firebase account creation is connected.
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 py-10 text-white">
-      <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/30">
+      <section className="w-full max-w-md rounded-lg border border-white/10 bg-white/4 p-6 shadow-2xl shadow-black/30">
         {/* Simple route links for moving between public auth pages. */}
         <div className="mb-8 flex items-center justify-between text-sm">
           <Link href="/" className="font-semibold text-white">
