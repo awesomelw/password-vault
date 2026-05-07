@@ -153,6 +153,11 @@ Deployment is not required for local development, but a hosted version would nee
 - App Check debug mode disabled in production
 - Firestore and authentication checked after deployment
 
+## Future Work
+
+- Derive the vault encryption key from a separate master password instead of storing the generated AES key in browser local storage.
+- Add account recovery/export guidance for cases where a user changes browsers or clears local storage.
+
 ## Design Documentation
 
 See `DESIGN.md` for component patterns, file responsibilities, design choices, and request flow diagrams.
