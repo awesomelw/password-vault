@@ -5,6 +5,7 @@ type CreateVaultItemInput = {
   username: string;
   encryptedPassword: string;
   passwordIv: string;
+  notes?: string;
 };
 
 export type VaultItem = CreateVaultItemInput & {

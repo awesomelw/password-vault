@@ -8,6 +8,7 @@ type CreateVaultItemBody = {
   username?: unknown;
   encryptedPassword?: unknown;
   passwordIv?: unknown;
+  notes?: unknown;
 };
 
 function isNonEmptyString(value: unknown): value is string {
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as CreateVaultItemBody;
-  const { service, username, encryptedPassword, passwordIv } = body;
+  const { service, username, encryptedPassword, passwordIv, notes } = body;
 
   // Requires encrypted password data so plaintext never reaches Firestore.
   if (
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
     username: username.trim(),
     encryptedPassword,
     passwordIv,
+    notes: isNonEmptyString(notes) ? notes.trim() : "",
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   };
