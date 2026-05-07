@@ -39,15 +39,14 @@ export default function Home() {
           {/* main headline and sign-up actions */}
           <section className="max-w-2xl">
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-emerald-300">
-              Secure password storage
+              Secure login storage
             </p>
             <h1 className="text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-              Keep your logins organized, protected, and close at hand.
+              Keep your logins organized and easy to reach.
             </h1>
             <p className="mt-6 max-w-xl text-base leading-8 text-zinc-300 sm:text-lg">
-              Save account details in a private vault, reveal passwords only
-              when you need them, and copy credentials without digging through
-              notes or reused spreadsheets.
+              Save account details in a private vault, reveal passwords when
+              needed, and copy credentials without digging through notes.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
