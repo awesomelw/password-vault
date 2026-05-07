@@ -1,92 +1,47 @@
-# password-vault
+# Password Vault
 
-fullstack password vault built with next.js, firebase auth, firestore, firebase admin, app check recaptcha, web crypto, typescript, and tailwind css
+A fullstack password vault built with Next.js, Firebase Authentication, Cloud Firestore, Firebase Admin, App Check reCAPTCHA, the Web Crypto API, TypeScript, and Tailwind CSS.
 
-## features
+## Features
 
-- email/password signup and login with firebase authentication
-- protected vault and settings pages
-- backend firebase id token verification through next.js api routes
-- encrypted password records stored in cloud firestore
-- browser-side password encryption and decryption with web crypto aes-gcm
-- add, reveal, hide, copy, edit, and delete vault records
-- per-user firestore storage at `users/{uid}/vaultItems/{itemId}`
-- inactivity auto-lock setting stored in the browser
-- firebase app check with invisible recaptcha for browser request protection
-- public landing page with a sponsored-space placeholder kept outside private vault screens
+- Email/password signup and login with Firebase Authentication
+- Protected vault and settings pages
+- Backend Firebase ID token verification through Next.js API routes
+- Encrypted password records stored in Cloud Firestore
+- Browser-side password encryption and decryption with Web Crypto AES-GCM
+- Add, reveal, hide, copy, edit, and delete vault records
+- Per-user Firestore storage at `users/{uid}/vaultItems/{itemId}`
+- Inactivity auto-lock setting stored in the browser
+- Firebase App Check with invisible reCAPTCHA for browser request protection
+- Public landing page with sponsored-space placement kept outside private vault screens
 
-## stack
-
-- next.js app router
-- react
-- typescript
-- tailwind css
-- firebase auth
-- cloud firestore
-- firebase admin sdk
-- firebase app check with recaptcha v3
-- browser web crypto api
-- eslint
-
-## project structure
+## Project Structure
 
 ```text
 src/app
-next.js routes, pages, layouts, and api route handlers
+Next.js routes, pages, layouts, and API route handlers
 
 src/components
-shared react components and vault-specific ui
+Shared React components and vault-specific UI
 
 src/lib
-firebase setup, auth helpers, api clients, crypto helpers, and settings helpers
+Firebase setup, auth helpers, API clients, crypto helpers, and settings helpers
 
 src/hooks
-client-side hooks such as inactivity logout
+Client-side hooks such as inactivity logout
 ```
 
-important files:
+For detailed file responsibilities and request flow diagrams, see `DESIGN.md`.
 
-```text
-src/app/page.tsx
-public landing page
+## Local Setup
 
-src/app/login/page.tsx
-login page
-
-src/app/signup/page.tsx
-signup page
-
-src/app/vault/page.tsx
-protected vault dashboard
-
-src/app/settings/page.tsx
-protected auto-lock settings page
-
-src/app/api/vault/route.ts
-GET and POST backend route for vault records
-
-src/app/api/vault/[id]/route.ts
-PATCH and DELETE backend route for one vault record
-
-src/lib/firebase/client.ts
-browser firebase setup, auth instance, and app check recaptcha setup
-
-src/lib/firebase/admin.ts
-server firebase admin setup for auth verification and firestore writes
-
-src/lib/crypto/vaultCrypto.ts
-browser-side password encryption and decryption
-```
-
-## local setup
-
-install dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-create `.env.local` from `.env.example` and fill in your firebase values:
+Create `.env.local` from `.env.example` and fill in your Firebase values:
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
@@ -102,85 +57,85 @@ FIREBASE_ADMIN_CLIENT_EMAIL=your_service_account_email
 FIREBASE_ADMIN_PRIVATE_KEY="your_private_key_with_escaped_newlines"
 ```
 
-run the dev server:
+Run the development server:
 
 ```bash
 npm run dev
 ```
 
-open:
+Open the local app:
 
 ```text
 http://localhost:3000
 ```
 
-## firebase setup
+## Firebase Setup
 
-1. create a firebase project
-2. create a web app inside the project
-3. enable email/password authentication
-4. create a firestore database
-5. create a firebase admin service account
-6. copy the web app config into `.env.local`
-7. copy the service account project id, client email, and private key into `.env.local`
-8. register the web app with firebase app check using recaptcha
-9. add the recaptcha site key to `.env.local`
-10. use an app check debug token for local development
+1. Create a Firebase project.
+2. Create a web app inside the project.
+3. Enable email/password authentication.
+4. Create a Firestore database.
+5. Create a Firebase Admin service account.
+6. Copy the web app config into `.env.local`.
+7. Copy the service account project ID, client email, and private key into `.env.local`.
+8. Register the web app with Firebase App Check using reCAPTCHA.
+9. Add the reCAPTCHA site key to `.env.local`.
+10. Use an App Check debug token for local development.
 
-do not commit `.env.local`
+Do not commit `.env.local`.
 
-## recaptcha and app check
+## reCAPTCHA and App Check
 
-the app uses firebase app check with invisible recaptcha v3
+The app uses Firebase App Check with invisible reCAPTCHA v3.
 
-local development uses:
+Local development uses:
 
 ```env
 NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN=true
 ```
 
-after starting the app, firebase can print a debug token in the browser console. add that token in firebase console:
+After starting the app, Firebase can print a debug token in the browser console. Add that token in Firebase Console:
 
 ```text
-firebase console
-app check
-your web app
-manage debug tokens
+Firebase Console
+App Check
+Your web app
+Manage debug tokens
 ```
 
-leave enforcement off until local signup, login, vault loading, and firestore writes work
+Leave enforcement off until local signup, login, vault loading, and Firestore writes work.
 
-## security model
+## Security Model
 
-- firebase auth owns account signup, login, logout, and session restore
-- frontend requests include a firebase id token in the `Authorization` header
-- next.js api routes verify that token with firebase admin before reading or writing data
-- firestore records are scoped by firebase uid under `users/{uid}/vaultItems`
-- plaintext passwords are encrypted in the browser before they are sent to the backend
-- firestore stores `encryptedPassword` and `passwordIv`, not the plaintext password
-- revealed passwords exist only temporarily in browser component state
-- private pages are wrapped with `ProtectedPage`
-- inactivity logout redirects idle users back to login
+- Firebase Authentication owns account signup, login, logout, and session restore.
+- Frontend requests include a Firebase ID token in the `Authorization` header.
+- Next.js API routes verify that token with Firebase Admin before reading or writing data.
+- Firestore records are scoped by Firebase UID under `users/{uid}/vaultItems`.
+- Plaintext passwords are encrypted in the browser before they are sent to the backend.
+- Firestore stores `encryptedPassword` and `passwordIv`, not the plaintext password.
+- Revealed passwords exist only temporarily in browser component state.
+- Private pages are wrapped with `ProtectedPage`.
+- Inactivity logout redirects idle users back to login.
 
-current encryption note: the first version stores the vault encryption key in this browser's local storage, so records are decryptable from the same browser profile. see `DESIGN.md` for the detailed flow
+Current encryption note: this first version stores the vault encryption key in the browser's local storage, so records are decryptable from the same browser profile. See `DESIGN.md` for the detailed flow.
 
-## local checks
+## Local Checks
 
 ```bash
 npm run lint
 npm run build
 ```
 
-## deployment notes
+## Deployment Notes
 
-deployment is not required for local development, but a hosted version would need:
+Deployment is not required for local development, but a hosted version would need:
 
-- all `.env.local` values added as production environment variables
-- firebase authorized domain updated with the production domain
-- recaptcha/app check domain updated with the production domain
-- app check debug mode disabled in production
-- firestore and authentication checked after deployment
+- All `.env.local` values added as production environment variables
+- Firebase authorized domain updated with the production domain
+- reCAPTCHA/App Check domain updated with the production domain
+- App Check debug mode disabled in production
+- Firestore and authentication checked after deployment
 
-## docs
+## Design Documentation
 
-see `DESIGN.md` for component patterns, file responsibilities, and request flow diagrams
+See `DESIGN.md` for component patterns, file responsibilities, design choices, and request flow diagrams.

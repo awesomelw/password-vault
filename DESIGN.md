@@ -1,506 +1,324 @@
-# password-vault design notes
+# Password Vault Design Notes
 
-this doc explains where the main pieces live, how requests move through the app, and why the project is split into separate files
+This document explains how the app is organized, how the frontend connects to the backend, and why the main files are split the way they are.
 
-## high-level architecture
+## High-Level Architecture
 
 ```text
-browser
-react pages and components
-        |
-        | firebase auth session + id token
-        v
-next.js api routes
-src/app/api
-        |
-        | firebase admin verifies token
-        v
-firebase admin sdk
-src/lib/firebase/admin.ts
-        |
-        | reads and writes user-scoped records
-        v
-cloud firestore
+Browser UI -> Firebase Auth -> Next.js API routes -> Firebase Admin -> Cloud Firestore
+```
+
+The browser owns the user interface, Firebase Auth session, App Check setup, and password encryption.
+
+The backend API routes verify the signed-in user before reading or writing Firestore data.
+
+Firestore stores encrypted vault records under the verified Firebase UID:
+
+```text
 users/{uid}/vaultItems/{itemId}
 ```
 
-the browser handles ui, firebase auth, app check, and password encryption
-
-the backend api routes handle user verification and firestore writes
-
-firestore stores encrypted vault data scoped by firebase uid
-
-## main file responsibilities
+## Main File Responsibilities
 
 ```text
 src/app/page.tsx
-public landing page with sponsored-space placeholder
+Public landing page with the sponsored-space placeholder
 
 src/app/login/page.tsx
-public login form that calls firebase auth
+Login form that signs in with Firebase Auth
 
 src/app/signup/page.tsx
-public signup form that calls firebase auth
+Signup form that creates a Firebase Auth account
 
 src/app/vault/page.tsx
-protected dashboard that loads and displays vault records
+Protected vault dashboard and record loading flow
 
 src/app/settings/page.tsx
-protected page for inactivity timeout settings
+Protected inactivity timeout settings page
 
 src/components/ProtectedPage.tsx
-auth guard for private routes
+Reusable auth guard for private pages
 
 src/components/vault/AddPasswordForm.tsx
-form for adding a new encrypted vault record
+Form for creating encrypted vault records
 
 src/components/vault/VaultItemCard.tsx
-per-record actions: reveal, hide, copy, edit, delete
+Per-record controls for reveal, hide, copy, edit, and delete
 
 src/hooks/useInactivityLogout.ts
-idle timer for protected pages
+Idle timer used on protected pages
 
 src/lib/firebase/client.ts
-browser firebase app, firebase auth, and app check recaptcha setup
+Browser Firebase app, Auth instance, and App Check reCAPTCHA setup
 
 src/lib/firebase/admin.ts
-server firebase admin auth and firestore setup
+Server Firebase Admin Auth and Firestore setup
 
 src/lib/auth/clientAuth.ts
-small wrapper functions around firebase browser auth
+Small browser Auth wrappers for signup, login, and logout
 
 src/lib/auth/serverAuth.ts
-backend helper that verifies bearer tokens with firebase admin
+Backend helper that verifies Bearer tokens with Firebase Admin
 
 src/lib/api/vaultApi.ts
-frontend helper functions for calling vault api routes
+Frontend API helpers for vault CRUD requests
 
 src/lib/api/authCheck.ts
-frontend helper for checking backend token verification
+Frontend helper for checking backend token verification
 
 src/lib/crypto/vaultCrypto.ts
-browser-side aes-gcm encryption and decryption helpers
+Browser-side AES-GCM encryption and decryption helpers
 
 src/lib/settings/inactivity.ts
-local storage helpers for the auto-lock timeout
+Local storage helpers for the auto-lock timeout
 ```
 
-## design choices
+## Design Choices
 
-### separate `VaultPage` and `VaultWorkspace`
+### `VaultPage` and `VaultWorkspace` are separated
 
-`VaultPage` wraps the real dashboard with `ProtectedPage`
+`VaultPage` only wraps the dashboard with `ProtectedPage`.
 
-`VaultWorkspace` loads records only after `ProtectedPage` confirms firebase restored the session
+`VaultWorkspace` contains the actual vault loading state and dashboard UI.
 
-this avoids a timing bug where the vault page could call the backend before `auth.currentUser` exists
+This keeps vault loading from running before Firebase finishes restoring the current user.
 
 ```text
 VaultPage
 src/app/vault/page.tsx
-        |
-        | renders private guard
-        v
-ProtectedPage
+-> ProtectedPage
 src/components/ProtectedPage.tsx
-        |
-        | waits for firebase auth session
-        v
-VaultWorkspace
+-> VaultWorkspace
 src/app/vault/page.tsx
-        |
-        | loads backend auth check and vault records
-        v
-vault dashboard ui
+-> vault dashboard UI
 ```
 
-### reusable protected page guard
+### Private pages share one auth guard
 
-private pages use the same auth gate instead of repeating auth checks in every page
+`/vault` and `/settings` both use `ProtectedPage`, so the app does not repeat session-checking code in every private page.
 
 ```text
 /vault or /settings
-        |
-        v
-ProtectedPage
-        |
-        | onAuthStateChanged(auth)
-        v
-firebase auth
-        |
-        | user exists
-        v
-render children
-        |
-        | no user
-        v
-router.replace("/login")
+-> ProtectedPage
+-> onAuthStateChanged(auth)
+-> Firebase Auth
+-> user exists: render page
+-> no user: router.replace("/login")
 ```
 
-### api helper files
+### Components call API helper files instead of raw routes
 
-the components do not manually build every `fetch` request
+Vault components do not manually build every `fetch` request. They call helper functions in `src/lib/api/vaultApi.ts`.
 
-instead, frontend api helpers handle tokens, headers, urls, and error handling
+Those helpers handle:
+
+- reading `auth.currentUser`
+- getting a Firebase ID token
+- adding the `Authorization` header
+- calling the correct API route
+- throwing errors when the response fails
 
 ```text
-component
-        |
-        v
-src/lib/api/vaultApi.ts
-        |
-        | gets id token from auth.currentUser
-        | sends fetch request with Authorization header
-        v
-src/app/api/vault/*
+React component
+-> src/lib/api/vaultApi.ts
+-> Firebase ID token from auth.currentUser
+-> fetch("/api/vault...", Authorization header)
+-> Next.js API route
 ```
 
-### browser-side encryption
+### Passwords are encrypted in the browser
 
-passwords are encrypted before they leave the browser
-
-the backend never receives the plaintext password
+Plaintext passwords should not reach the backend. The browser encrypts the password first, then sends only encrypted fields to the API.
 
 ```text
 plaintext password
-        |
-        v
-encryptPassword(password)
+-> encryptPassword(password)
 src/lib/crypto/vaultCrypto.ts
-        |
-        | aes-gcm + fresh iv
-        v
-encryptedPassword + passwordIv
-        |
-        v
-api route and firestore
+-> encryptedPassword + passwordIv
+-> API route
+-> Firestore
 ```
 
-current key note: this version stores the aes key in browser local storage so the same browser profile can decrypt records after refresh
+Current key note: this version stores the AES key in browser local storage, so the same browser profile can decrypt records after refresh.
 
-## add password flow
+## Add Password Flow
 
 ```text
-VaultPage / VaultWorkspace
+VaultWorkspace
 src/app/vault/page.tsx
-        |
-        | renders add form
-        v
-AddPasswordForm
+-> AddPasswordForm
 src/components/vault/AddPasswordForm.tsx
-        |
-        | user fills service / username / password / notes
-        v
-handleAddPassword()
+-> handleAddPassword()
 src/components/vault/AddPasswordForm.tsx
-        |
-        | validates required fields
-        v
-encryptPassword(password)
+-> encryptPassword(password)
 src/lib/crypto/vaultCrypto.ts
-        |
-        | returns encryptedPassword + passwordIv
-        v
-createVaultItem(...)
+-> createVaultItem(...)
 src/lib/api/vaultApi.ts
-        |
-        | gets firebase id token from auth.currentUser
-        | sends POST request with Authorization header
-        v
-POST: /api/vault
+-> POST: /api/vault
 src/app/api/vault/route.ts
-        |
-        | verifyRequestUser(request)
-        v
-verifyRequestUser()
+-> verifyRequestUser(request)
 src/lib/auth/serverAuth.ts
-        |
-        | adminAuth.verifyIdToken(token)
-        v
-firebase admin auth
+-> adminAuth.verifyIdToken(token)
 src/lib/firebase/admin.ts
-        |
-        | confirms user uid
-        v
-POST: /api/vault continues
+-> adminDb writes encrypted record
 src/app/api/vault/route.ts
-        |
-        | adminDb writes encrypted record
-        v
-cloud firestore
+-> Cloud Firestore
 users/{uid}/vaultItems/{itemId}
-        |
-        | frontend refreshes list
-        v
-getVaultItems()
-src/lib/api/vaultApi.ts
+-> refreshVaultItems()
+src/app/vault/page.tsx
 ```
 
-## load vault records flow
+What happens in that flow:
+
+1. The user fills in service, username, password, and optional notes.
+2. `handleAddPassword()` validates required fields.
+3. `encryptPassword()` encrypts the plaintext password in the browser.
+4. `createVaultItem()` gets the Firebase ID token and sends the POST request.
+5. `POST: /api/vault` verifies the token with Firebase Admin.
+6. Firestore receives only encrypted password data.
+7. The dashboard refreshes the visible record list.
+
+## Load Vault Records Flow
 
 ```text
 VaultWorkspace mounts
 src/app/vault/page.tsx
-        |
-        | checkBackendAuth()
-        v
-GET: /api/auth-check
+-> checkBackendAuth()
+src/lib/api/authCheck.ts
+-> GET: /api/auth-check
 src/app/api/auth-check/route.ts
-        |
-        | verifyRequestUser(request)
-        v
-firebase admin auth verifies id token
-        |
-        | session accepted
-        v
-refreshVaultItems()
+-> verifyRequestUser(request)
+src/lib/auth/serverAuth.ts
+-> Firebase Admin verifies token
+src/lib/firebase/admin.ts
+-> refreshVaultItems()
 src/app/vault/page.tsx
-        |
-        | getVaultItems()
-        v
-GET: /api/vault
-src/app/api/vault/route.ts
-        |
-        | verify token again
-        | query users/{uid}/vaultItems
-        v
-cloud firestore
-        |
-        | returns encrypted records
-        v
-VaultItemCard list
-src/components/vault/VaultItemCard.tsx
-```
-
-## reveal and hide password flow
-
-```text
-VaultItemCard
-src/components/vault/VaultItemCard.tsx
-        |
-        | user clicks reveal password
-        v
-handleTogglePassword()
-        |
-        | decryptPassword(encryptedPassword, passwordIv)
-        v
-decryptPassword()
-src/lib/crypto/vaultCrypto.ts
-        |
-        | uses browser-held aes key
-        v
-plaintext password in component state
-        |
-        | user clicks hide password
-        v
-setRevealedPassword("")
-```
-
-important detail: the revealed plaintext is not written back to firestore or sent to the backend
-
-## copy password flow
-
-```text
-VaultItemCard
-        |
-        | user clicks copy password
-        v
-handleCopyPassword()
-        |
-        | uses revealed password if already visible
-        | otherwise decrypts on demand
-        v
-navigator.clipboard.writeText(password)
-```
-
-## edit password flow
-
-```text
-VaultItemCard
-        |
-        | user clicks edit
-        v
-edit mode state
-        |
-        | user changes service / username / notes
-        | optional new password
-        v
-handleSaveEdit()
-        |
-        | validates service and username
-        | if new password exists, encrypt it
-        v
-updateVaultItem(id, updates)
+-> getVaultItems()
 src/lib/api/vaultApi.ts
-        |
-        | sends PATCH with firebase id token
-        v
-PATCH: /api/vault/[id]
-src/app/api/vault/[id]/route.ts
-        |
-        | verifyRequestUser(request)
-        | validate update fields
-        | require encryptedPassword + passwordIv together
-        v
-adminDb updates users/{uid}/vaultItems/{id}
+-> GET: /api/vault
+src/app/api/vault/route.ts
+-> query users/{uid}/vaultItems
+Cloud Firestore
+-> VaultItemCard list
+src/components/vault/VaultItemCard.tsx
 ```
 
-why `patch` is used: editing updates an existing record without creating a new document id
+The backend auth check confirms the server can verify the browser session. The vault list request then fetches only the records under that verified user's UID.
 
-why password is re-encrypted: changing the password creates new ciphertext and a new iv
+## Record Controls
 
-why password can be blank in edit mode: blank means keep the existing encrypted password fields
+`VaultItemCard` owns the per-record actions: reveal, hide, copy, edit, and delete.
 
-## delete password flow
+Reveal and copy password both decrypt inside the browser with `decryptPassword()`. The revealed plaintext is not sent to the backend or written back to Firestore. It exists only temporarily in component state or the clipboard action.
+
+Copy username does not need decryption because usernames are stored as normal text.
+
+## Edit Password Flow
 
 ```text
 VaultItemCard
-        |
-        | user clicks delete
-        v
-handleDelete()
-        |
-        | deleteVaultItem(item.id)
-        v
-DELETE: /api/vault/[id]
+src/components/vault/VaultItemCard.tsx
+-> edit mode state
+-> handleSaveEdit()
+-> optional encryptPassword(editPassword)
+src/lib/crypto/vaultCrypto.ts
+-> updateVaultItem(id, updates)
+src/lib/api/vaultApi.ts
+-> PATCH: /api/vault/[id]
 src/app/api/vault/[id]/route.ts
-        |
-        | verifyRequestUser(request)
-        | delete users/{uid}/vaultItems/{id}
-        v
-refreshVaultItems()
+-> verifyRequestUser(request)
+src/lib/auth/serverAuth.ts
+-> adminDb updates users/{uid}/vaultItems/{id}
+src/lib/firebase/admin.ts
 ```
 
-## login flow
+Important details:
+
+- `PATCH` updates the existing record instead of creating a new document.
+- Service and username are required so edited records stay readable.
+- If the password field is blank in edit mode, the existing encrypted password stays unchanged.
+- If the user enters a new password, the frontend encrypts it and sends a new `encryptedPassword` plus `passwordIv`.
+- The backend requires encrypted password and IV to be updated together.
+
+Delete uses `DELETE: /api/vault/[id]`, verifies the Firebase token on the backend, and removes only `users/{uid}/vaultItems/{id}`. The request body never decides which user's data is touched.
+
+## Auth Pages
+
+`LoginPage` and `SignupPage` keep local form validation and user-facing error messages in the page components.
+
+Actual auth work goes through `src/lib/auth/clientAuth.ts`, which wraps Firebase browser Auth:
 
 ```text
-LoginPage
-src/app/login/page.tsx
-        |
-        | user enters email and password
-        v
-handleLogin()
-        |
-        | local required-field check
-        v
-logInWithEmail(email, password)
-src/lib/auth/clientAuth.ts
-        |
-        | signInWithEmailAndPassword(auth, ...)
-        v
-firebase auth
-        |
-        | success
-        v
-router.push("/vault")
+LoginPage / SignupPage
+-> clientAuth helper
+-> Firebase Auth
+-> router.push("/vault")
 ```
 
-## signup flow
+Firebase signs the user in after successful signup, so the app can route directly to the vault.
+
+## App Check reCAPTCHA Flow
 
 ```text
-SignupPage
-src/app/signup/page.tsx
-        |
-        | user enters email / password / confirm password
-        v
-handleSignup()
-        |
-        | local validation
-        v
-signUpWithEmail(email, password)
-src/lib/auth/clientAuth.ts
-        |
-        | createUserWithEmailAndPassword(auth, ...)
-        v
-firebase auth
-        |
-        | firebase signs user in
-        v
-router.push("/vault")
-```
-
-## app check recaptcha flow
-
-```text
-browser loads firebase client
+Browser loads Firebase client
 src/lib/firebase/client.ts
-        |
-        | initializeAppCheck(...)
-        v
-firebase app check
-        |
-        | invisible recaptcha check
-        v
-recaptcha token
-        |
-        | exchanged by firebase for app check token
-        v
-app check token
-        |
-        | attached to firebase browser requests
-        v
-firebase services
+-> initializeAppCheck(...)
+-> invisible reCAPTCHA check
+-> reCAPTCHA token
+-> Firebase exchanges it for an App Check token
+-> App Check token attaches to Firebase browser requests
+-> Firebase services
 ```
 
-local development uses a firebase app check debug token so localhost can be trusted while testing
+Local development uses a registered Firebase App Check debug token so localhost can be trusted while testing.
 
-## inactivity logout flow
+## Inactivity Logout Flow
 
 ```text
 ProtectedPage confirms session
 src/components/ProtectedPage.tsx
-        |
-        | useInactivityLogout(isAuthenticated)
-        v
-useInactivityLogout()
+-> useInactivityLogout(isAuthenticated)
 src/hooks/useInactivityLogout.ts
-        |
-        | listens for mousemove / keydown / click / scroll
-        | resets timer on activity
-        v
-saved timeout expires
-        |
-        | logOut()
-        | router.replace("/login")
-        v
-login page
+-> listen for mousemove / keydown / click / scroll
+-> reset timer on activity
+-> saved timeout expires
+-> logOut()
+src/lib/auth/clientAuth.ts
+-> router.replace("/login")
 ```
 
-settings are stored by:
+Settings save the timeout here:
 
 ```text
 SettingsPage
 src/app/settings/page.tsx
-        |
-        | saveInactivityTimeout(selectedTimeout)
-        v
-localStorage
+-> saveInactivityTimeout(selectedTimeout)
+src/lib/settings/inactivity.ts
+-> localStorage
 password-vault-timeout-minutes
 ```
 
-## public pages and ads
+## Public Pages and Ads
 
-ads are intentionally kept out of private routes
+Ads are intentionally kept out of private routes.
 
-current public placement:
+Current public placement:
 
 ```text
 Home page
 src/app/page.tsx
-        |
-        | sponsored-space placeholder
-        v
-future adsense unit
+-> sponsored-space placeholder
+-> future AdSense unit
 ```
 
-private routes do not import an ad component:
+Private routes do not import an ad component:
 
 ```text
 /vault
 /settings
 ```
 
-## firestore data shape
+## Firestore Data Shape
 
 ```text
 users
@@ -516,13 +334,13 @@ users
         updatedAt: server timestamp
 ```
 
-the `uid` comes from the verified firebase id token, not from the request body
+The `uid` comes from the verified Firebase ID token, not from the request body.
 
-## route summary
+## Route Summary
 
 ```text
 GET: /api/auth-check
-verify the current firebase id token
+verify the current Firebase ID token
 
 GET: /api/vault
 load encrypted vault records for the verified user
